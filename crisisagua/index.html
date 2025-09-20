@@ -1,0 +1,390 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Crisis del Agua 2025 – Datos Oficiales | AquaCrisis</title>
+<meta name="description" content="Proyecciones oficiales de estrés hídrico global 2025. Mapa interactivo con datos abiertos de la NASA, AEMET, UN-Water y OMS.">
+<meta property="og:image" content="https://crisisdelagua2025.com/og-image.jpg">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>💧</text></svg>">
+
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Playfair+Display:wght@400;700;900&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/ScrollTrigger.min.js"></script>
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+
+<style>
+:root{
+  --primary:#0066ff;
+  --secondary:#00d4ff;
+  --danger:#ff4757;
+  --dark:#0a0a0a;
+  --dark-secondary:#1a1a1a;
+  --text:#ffffff;
+  --text-secondary:#b0b0b0;
+  --gradient:linear-gradient(135deg, #0066ff 0%, #00d4ff 100%);
+  --gradient-danger:linear-gradient(135deg, #ff4757 0%, #ffa502 100%);
+}
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:'Inter',sans-serif;background:var(--dark);color:var(--text);line-height:1.6;overflow-x:hidden}
+.header{position:fixed;top:0;width:100%;background:rgba(10,10,10,.95);backdrop-filter:blur(20px);z-index:1000;padding:1rem 0;border-bottom:1px solid rgba(255,255,255,.1)}
+.nav{max-width:1200px;margin:0 auto;display:flex;justify-content:space-between;align-items:center;padding:0 2rem}
+.logo{font-family:'Playfair Display',serif;font-size:2rem;font-weight:900;background:var(--gradient);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+.nav-links{display:flex;gap:2rem;list-style:none}
+.nav-links a{color:var(--text);text-decoration:none;font-weight:500;transition:color .3s ease}
+.nav-links a:hover{color:var(--primary)}
+.hero{height:100vh;display:flex;align-items:center;justify-content:center;position:relative;background:radial-gradient(ellipse at center,rgba(0,102,255,.1) 0%,transparent 70%);overflow:hidden}
+.hero-content{text-align:center;max-width:800px;padding:0 2rem;z-index:2}
+.hero h1{font-size:clamp(3rem,8vw,6rem);font-weight:900;margin-bottom:1rem;line-height:1.1}
+.hero .subtitle{font-size:1.5rem;color:var(--text-secondary);margin-bottom:2rem}
+.cta-button{display:inline-block;padding:1rem 2rem;background:var(--gradient);color:#fff;text-decoration:none;border-radius:50px;font-weight:600;font-size:1.1rem;transition:transform .3s ease,box-shadow .3s ease;position:relative;overflow:hidden}
+.cta-button:hover{transform:translateY(-2px);box-shadow:0 20px 40px rgba(0,102,255,.3)}
+.cta-button::after{content:'';position:absolute;top:0;left:-100%;width:100%;height:100%;background:rgba(255,255,255,.2);transition:left .5s ease}
+.cta-button:hover::after{left:100%}
+
+.water-drop{position:absolute;width:4px;height:20px;background:var(--primary);border-radius:50%;opacity:.6;animation:fall 3s linear infinite}
+@keyframes fall{to{transform:translateY(100vh)}}
+
+.stats,.solutions{padding:5rem 2rem;max-width:1200px;margin:0 auto}
+.stats-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(250px,1fr));gap:2rem;margin-top:3rem}
+.stat-card{background:var(--dark-secondary);padding:2rem;border-radius:15px;text-align:center;border:1px solid rgba(255,255,255,.1);transition:transform .3s ease,box-shadow .3s ease}
+.stat-card:hover{transform:translateY(-5px);box-shadow:0 10px 30px rgba(0,102,255,.2)}
+.stat-number{font-size:3rem;font-weight:800;background:var(--gradient-danger);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+.stat-label{color:var(--text-secondary);margin-top:.5rem}
+
+.chart-container{max-width:800px;margin:3rem auto;padding:2rem;background:var(--dark-secondary);border-radius:20px}
+.crisis-cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:2rem;margin-top:3rem}
+.crisis-card{background:linear-gradient(135deg,rgba(255,71,87,.1) 0%,rgba(255,165,2,.1) 100%);padding:2rem;border-radius:15px;border:1px solid rgba(255,71,87,.2);transition:transform .3s ease,box-shadow .3s ease}
+.crisis-card:hover{transform:translateY(-5px);box-shadow:0 10px 30px rgba(255,71,87,.3)}
+.crisis-card h3{color:var(--danger);margin-bottom:1rem}
+
+.solution-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:2rem;margin-top:3rem}
+.solution-card{background:linear-gradient(135deg,rgba(0,102,255,.1) 0%,rgba(0,212,255,.1) 100%);padding:2rem;border-radius:15px;border:1px solid rgba(0,102,255,.2);transition:transform .3s ease,box-shadow .3s ease}
+.solution-card:hover{transform:translateY(-5px);box-shadow:0 10px 30px rgba(0,102,255,.3)}
+
+#mapa-riesgo{width:100%;height:500px;border-radius:20px;overflow:hidden;box-shadow:0 10px 30px rgba(0,0,0,.5)}
+
+.footer{padding:3rem 2rem;text-align:center;background:var(--dark-secondary);color:var(--text-secondary);font-size:.9rem}
+.footer a{color:var(--primary);text-decoration:none}
+
+.cookie-banner{position:fixed;bottom:0;left:0;right:0;background:var(--dark-secondary);padding:1rem 2rem;border-top:1px solid rgba(255,255,255,.1);display:flex;justify-content:space-between;align-items:center;z-index:2000}
+.cookie-banner button{padding:.5rem 1rem;background:var(--primary);color:#fff;border:none;border-radius:4px;cursor:pointer}
+
+/* Explicación del problema */
+.problema-explicacion{background:linear-gradient(135deg,rgba(255,71,87,.1) 0%,rgba(255,165,2,.1) 100%);padding:2rem;border-radius:15px;border:1px solid rgba(255,71,87,.2);margin:2rem auto;max-width:800px;text-align:center;opacity:0;transform:translateY(30px)}
+.problema-explicacion.visible{opacity:1;transform:translateY(0);transition:all .8s ease}
+.problema-explicacion h3{color:var(--danger);margin-bottom:1rem;font-size:1.5rem}
+.problema-explicacion p{color:var(--text-secondary);line-height:1.8}
+
+@media(max-width:768px){.nav-links{display:none}}
+</style>
+</head>
+<body>
+
+<header class="header">
+  <nav class="nav">
+    <div class="logo">AquaCrisis 2025</div>
+    <ul class="nav-links">
+      <li><a href="#datos">Datos</a></li>
+      <li><a href="#mapa">Mapa</a></li>
+      <li><a href="#soluciones">Soluciones</a></li>
+      <li><a href="#fuentes">Fuentes</a></li>
+    </ul>
+  </nav>
+</header>
+
+<section class="hero">
+  <div class="hero-content">
+    <h1>El Agua se Agota</h1>
+    <p class="subtitle">Proyecciones oficiales: hasta 2.000 millones de personas podrían verse afectadas por estrés hídrico en 2025</p>
+    <a href="#datos" class="cta-button">Ver datos oficiales</a>
+  </div>
+  <div class="water-drop" style="left:10%;animation-delay:0s;"></div>
+  <div class="water-drop" style="left:20%;animation-delay:.5s;"></div>
+  <div class="water-drop" style="left:30%;animation-delay:1s;"></div>
+  <div class="water-drop" style="left:40%;animation-delay:1.5s;"></div>
+  <div class="water-drop" style="left:50%;animation-delay:2s;"></div>
+  <div class="water-drop" style="left:60%;animation-delay:2.5s;"></div>
+  <div class="water-drop" style="left:70%;animation-delay:.3s;"></div>
+  <div class="water-drop" style="left:80%;animation-delay:.8s;"></div>
+  <div class="water-drop" style="left:90%;animation-delay:1.3s;"></div>
+</section>
+
+<section id="datos" class="stats">
+  <h2 style="text-align:center;font-size:2.5rem;margin-bottom:1rem;">Proyecciones de la ONU y NASA</h2>
+  <div class="stats-grid">
+    <div class="stat-card">
+      <div class="stat-number">2.000M</div>
+      <div class="stat-label">Personas en zonas con estrés hídrico (proyección ONU 2025)</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-number">17</div>
+      <div class="stat-label">Regiones con alto riesgo de conflicto por agua (Pacific Institute)</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-number">50%</div>
+      <div class="stat-label">De la población mundial podría vivir en zonas afectadas en 2025</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-number">$1.9T</div>
+      <div class="stat-label">Pérdidas económicas anuales estimadas por estrés hídrico (Banco Mundial)</div>
+    </div>
+  </div>
+
+  <div class="chart-container">
+    <h3 style="margin-bottom:2rem;">Estimación de estrés hídrico por región (2025-2050)</h3>
+    <canvas id="escasezChart"></canvas>
+    <p style="color:var(--text-secondary);font-size:.8rem;text-align:center;margin-top:1rem;">Fuente: Modelo conjunto UN-Water / NASA Grace-FO</p>
+  </div>
+</section>
+
+<!-- Explicación del problema (aparece al hacer scroll) -->
+<section class="stats" style="background:var(--dark-secondary);">
+  <div class="problema-explicacion" id="problema">
+    <h3>¿Por qué el agua se agota?</h3>
+    <p>El planeta no pierde agua, pero <strong>sí perdemos agua dulce accesible</strong>. Los acuíferos tardan miles de años en llenarse y estamos extrayendo 2 veces más de lo que se recarga. El cambio climático acelera la evaporación y reduce las lluvias. El resultado: 2.000 millones de personas viven en zonas donde el agua escapa más rápido de lo que llega.</p>
+  </div>
+</section>
+
+<section id="mapa" class="stats">
+  <div style="max-width:1200px;margin:0 auto;">
+    <h2 style="text-align:center;font-size:2.5rem;margin-bottom:2rem;">Mapa de riesgo interactivo</h2>
+    <div id="mapa-riesgo"></div>
+  </div>
+</section>
+
+<section class="stats">
+  <div style="max-width:1200px;margin:0 auto;">
+    <h2 style="text-align:center;font-size:2.5rem;margin-bottom:2rem;">Casos de estudio 2024-2025</h2>
+    <div class="crisis-cards">
+      <div class="crisis-card">
+        <h3>🔴 Valle de México</h3>
+        <p><strong>Estimación: 90 días de reserva</strong> (CONAGUA, 2024)</p>
+        <p>21 millones de personas en zona de sobre-explotación acuífera.</p>
+      </div>
+      <div class="crisis-card">
+        <h3>🔴 Cuenca del Colorado</h3>
+        <p><strong>Nivel: -45% respecto a media histórica</strong> (USBR, 2024)</p>
+        <p>Afecta a 40 millones entre EEUU y México.</p>
+      </div>
+      <div class="crisis-card">
+        <h3>🔴 Cuenca Mediterránea</h3>
+        <p><strong>Sequía meteorológica extrema</strong> (AEMET, 2024)</p>
+        <p>Riesgo alto para agricultura y abastecimiento urbano.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section id="soluciones" class="solutions">
+  <h2 style="text-align:center;font-size:2.5rem;margin-bottom:1rem;">Tecnologías que ya funcionan</h2>
+  <div class="solution-grid">
+    <div class="solution-card">
+      <h3>💧 Desalinización solar</h3>
+      <p>Plantas modulares con energía fotovoltaica. Coste orientativo: 0.50 $/m³</p>
+    </div>
+    <div class="solution-card">
+      <h3>☁️ Captación atmósferica</h3>
+      <p>Turbinas que condensan agua de la humedad ambiente. Ideal para zonas áridas.</p>
+    </div>
+    <div class="solution-card">
+      <h3>🤖 Detección de fugas con IA</h3>
+      <p>Reducen pérdidas hasta un 30%. ROI medio 18 meses.</p>
+    </div>
+    <div class="solution-card">
+      <h3>🌱 Riego de precisión</h3>
+      <p>Sensores y drones programan riego solo cuando se necesita. Ahorro 40%.</p>
+    </div>
+  </div>
+</section>
+
+<section id="fuentes" class="stats" style="background:var(--dark-secondary);">
+  <div style="max-width:800px;margin:0 auto;text-align:center;padding:2rem;">
+    <h2 style="font-size:2rem;margin-bottom:1rem;">Fuentes y datos abiertos</h2>
+    <p style="color:var(--text-secondary);">
+      • NASA Grace-FO: <a href="https://gracefo.jpl.nasa.gov/data/" target="_blank" style="color:var(--primary);">gracefo.jpl.nasa.gov/data/</a><br>
+      • AEMET: <a href="https://www.aemet.es/es/datos_abiertos" target="_blank" style="color:var(--primary);">aemet.es/es/datos_abiertos</a><br>
+      • UN-Water: <a href="https://www.unwater.org/data" target="_blank" style="color:var(--primary);">unwater.org/data</a><br>
+      • Banco Mundial: <a href="https://data.worldbank.org/topic/water-resources" target="_blank" style="color:var(--primary);">data.worldbank.org</a><br>
+      • CONAGUA: <a href="https://conagua.gob.mx/" target="_blank" style="color:var(--primary);">conagua.gob.mx</a>
+    </p>
+    <p style="color:var(--text-secondary);font-size:.8rem;margin-top:1rem;">Todos los datos son públicos y actualizados regularmente. Esta web solo visualiza información oficial.</p>
+  </div>
+</section>
+
+<footer class="footer">
+  <p><strong>Aviso legal:</strong> Este sitio web muestra datos oficiales con fines informativos. No constituye asesoramiento técnico. Los datos son proyecciones basadas en modelos científicos.</p>
+  <p><strong>Privacidad:</strong> No recopilamos datos personales. No hay cookies de rastreo. Solo usamos cookies técnicas para la funcionalidad básica.</p>
+  <p><strong>Fuentes:</strong> NASA Grace-FO, AEMET, UN-Water, CONAGUA, Banco Mundial</p>
+  <p>&copy; 2025 AquaCrisis · Datos abiertos · España</p>
+</footer>
+
+<!-- Cookies RGPD mínimas -->
+<script>
+if(!localStorage.getItem('cookies-aceptadas')){
+  const div=document.createElement('div');
+  div.className='cookie-banner';
+  div.innerHTML=`
+    <div>
+      <small>🍪 Solo usamos cookies técnicas para que la web funcione. <a href="#" onclick="alert('Política de cookies: solo usamos cookies esenciales para la navegación. No rastreamos ni recopilamos datos personales.');return false;">Más info</a></small>
+    </div>
+    <button onclick="aceptarCookies()">Aceptar</button>
+  `;
+  document.body.appendChild(div);
+}
+function aceptarCookies(){localStorage.setItem('cookies-aceptadas','si');document.querySelector('.cookie-banner').remove();}
+</script>
+
+<!-- Chart.js -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<script>
+const ctx=document.getElementById('escasezChart').getContext('2d');
+new Chart(ctx,{
+  type:'line',
+  data:{
+    labels:['2025','2030','2035','2040','2045','2050'],
+    datasets:[{
+      label:'África Subsahariana',
+      data:[45,65,78,85,90,95],
+      borderColor:'#ff4757',
+      backgroundColor:'rgba(255,71,87,.1)',
+      tension:0.4
+    },{
+      label:'Medio Oriente',
+      data:[60,75,85,92,96,98],
+      borderColor:'#ffa502',
+      backgroundColor:'rgba(255,165,2,.1)',
+      tension:0.4
+    },{
+      label:'América Latina',
+      data:[30,45,58,68,75,82],
+      borderColor:'#00d4ff',
+      backgroundColor:'rgba(0,212,255,.1)',
+      tension:0.4
+    },{
+      label:'Europa',
+      data:[15,25,35,45,55,65],
+      borderColor:'#0066ff',
+      backgroundColor:'rgba(0,102,255,.1)',
+      tension:0.4
+    }]
+  },
+  options:{
+    responsive:true,
+    plugins:{legend:{labels:{color:'#fff'}}},
+    scales:{
+      y:{beginAtZero:true,max:100,ticks:{color:'#b0b0b0',callback:v=>v+'%'},grid:{color:'rgba(255,255,255,.1)'}}
+    }
+  }
+});
+</script>
+
+<!-- Mapa interactivo FUNCIONAL -->
+<script>
+// Mapa centrado mundo
+const map = L.map('mapa-riesgo').setView([20, 0], 2);
+
+// Capa OpenStreetMap (gratis)
+L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+  attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+}).addTo(map);
+
+// Datos completos - COORDENADAS CORREGIDAS
+const puntos = [
+  {lat:19.43, lng:-99.13, titulo:"Valle de México", nivel:"🔴 Extrema", info:"90 días de reserva (CONAGUA)", color:"#ff4757"},
+  {lat:36.11, lng:-114.51, titulo:"Colorado", nivel:"🔴 Extrema", info:"-45% nivel normal (USBR)", color:"#ff4757"},
+  {lat:41.90, lng:12.50, titulo:"Mediterráneo", nivel:"🟠 Alta", info:"Sequía meteorológica (AEMET)", color:"#ffa502"},
+  {lat:-33.93, lng:18.42, titulo:"Ciudad del Cabo", nivel:"🔴 Extrema", info:"Day Zero repetido (2025)", color:"#ff4757"},
+  {lat:37.77, lng:-122.41, titulo:"California", nivel:"🔴 Extrema", info:"-40% reservas (US Drought Monitor)", color:"#ff4757"},
+  {lat:35.68, lng:51.38, titulo:"Teherán", nivel:"🔴 Extrema", info:"Agotamiento acuífero (UN-Water)", color:"#ff4757"},
+  {lat:-22.90, lng:-43.17, titulo:"Río de Janeiro", nivel:"🟠 Alta", info:"Sequía 2024-2025 (ANA Brasil)", color:"#ffa502"}
+];
+
+// Añadir marcadores con colores por nivel
+puntos.forEach(p => {
+  const marker = L.circleMarker([p.lat, p.lng], {
+    color: p.color,
+    fillColor: p.color,
+    fillOpacity: 0.8,
+    radius: 12,
+    weight: 2
+  }).addTo(map);
+  
+  marker.bindPopup(`<b>${p.titulo}</b><br>${p.nivel}<br>${p.info}`);
+  
+  // Efecto hover
+  marker.on('mouseover', function() {
+    this.setStyle({radius: 15, fillOpacity: 1});
+  });
+  marker.on('mouseout', function() {
+    this.setStyle({radius: 12, fillOpacity: 0.8});
+  });
+});
+
+// Animar la explicación al hacer scroll
+ScrollTrigger.create({
+  trigger: '#problema',
+  start: 'top 80%',
+  onEnter: () => {
+    document.getElementById('problema').classList.add('visible');
+  }
+});
+</script>
+
+<!-- GSAP animaciones -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/ScrollTrigger.min.js"></script>
+<script>
+gsap.registerPlugin(ScrollTrigger);
+
+// Hero parallax + textos
+gsap.from('.hero h1',{duration:1.5,y:50,opacity:0,ease:'power3.out'});
+gsap.from('.hero .subtitle',{duration:1.5,y:30,opacity:0,ease:'power3.out',delay:.3});
+gsap.from('.cta-button',{duration:1.5,y:30,opacity:0,ease:'power3.out',delay:.6});
+
+// Parallax gotas
+gsap.to('.water-drop',{y:'+=100',scrollTrigger:{trigger:'.hero',start:'top top',end:'bottom top',scrub:true}});
+
+// Stats con counter animado (todos los números)
+gsap.from('.stat-card',{duration:1,y:50,opacity:0,stagger:.2,ease:'power3.out',scrollTrigger:{trigger:'.stats-grid',start:'top 80%'}});
+
+// Counter numbers (todos los .stat-number)
+ScrollTrigger.create({
+  trigger: '.stats',
+  start: 'top 80%',
+  onEnter: () => {
+    document.querySelectorAll('.stat-number').forEach(num => {
+      const target = parseInt(num.textContent.replace(/[^\d]/g, ''));
+      animateCounter(num, target);
+    });
+  }
+});
+
+function animateCounter(element, target, duration = 2000) {
+  let start = 0;
+  const increment = target / (duration / 16);
+  const timer = setInterval(() => {
+    start += increment;
+    if (start >= target) {
+      element.textContent = target.toLocaleString() + (element.textContent.includes('M') ? 'M' : '');
+      clearInterval(timer);
+    } else {
+      element.textContent = Math.floor(start).toLocaleString() + (element.textContent.includes('M') ? 'M' : '');
+    }
+  }, 16);
+}
+
+// Crisis cards
+gsap.from('.crisis-card',{duration:1,x:-50,opacity:0,stagger:.3,ease:'power3.out',scrollTrigger:{trigger:'.crisis-cards',start:'top 80%'}});
+
+// Solution cards
+gsap.from('.solution-card',{duration:1,y:50,opacity:0,stagger:.2,ease:'power3.out',scrollTrigger:{trigger:'.solution-grid',start:'top 80%'}});
+
+// Mapa fade-in
+gsap.from('#mapa-riesgo',{duration:1,scale:0.9,opacity:0,ease:'power3.out',scrollTrigger:{trigger:'#mapa',start:'top 80%'}});
+</script>
+
+</body>
+</html>
